@@ -59,6 +59,30 @@ exports.checkout = async (req, res) => {
   }
 };
 
+exports.getTransactions = async (req, res) => {
+  if (!validateCardNumber(req.params.cardNumber)) {
+    return res.status(400).send({
+      message: `Invalid Card Number`
+    });
+  }
+  const cardExist = await models.Card.findOne({
+    where: {
+      Number: req.params.cardNumber
+    }
+  })
+  if (!cardExist) {
+    return res.status(400).send({
+      message: `Card Not registered`
+    });
+  }
+  const txn = await models.Transaction.findAll({
+    where: {
+      CardNumber: req.params.cardNumber
+    }
+  }); 
+  return res.send(txn)
+};
+
 const validateCardNumber = (cardNumber) => {
   const re = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/;
   return re.test(cardNumber);

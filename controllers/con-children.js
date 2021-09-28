@@ -23,7 +23,7 @@ exports.addChild = async (req, res) => {
       message: `Invalid Name, cannot be empty`
     })
   }
-  if (Number(req.body.age.trim()) <= 0) {
+  if (req.body.age <= 0) {
     return res.status(400).send({
       message: `Invalid Age`
     })
@@ -31,7 +31,8 @@ exports.addChild = async (req, res) => {
 
   const existingChild = await models.Children.findOne({
     where: {
-      Name: req.body.name
+      Name: req.body.name,
+      ParentId: req.body.parentid
     }
   }); 
   if (!existingChild) {
