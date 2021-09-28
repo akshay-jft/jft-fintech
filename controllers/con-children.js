@@ -18,11 +18,22 @@ exports.getChildrenDetails = async (req, res) => {
 };
 
 exports.addChild = async (req, res) => {
+  if (req.body.name.trim().length === 0) {
+    return res.status(400).send({
+      message: `Invalid Name, cannot be empty`
+    })
+  }
+  if (Number(req.body.age.trim()) <= 0) {
+    return res.status(400).send({
+      message: `Invalid Age`
+    })
+  }
+
   const existingChild = await models.Children.findOne({
     where: {
       Name: req.body.name
     }
-  });
+  }); 
   if (!existingChild) {
     const child = await models.Children.create({
       Name: req.body.name,

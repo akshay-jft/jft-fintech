@@ -24,7 +24,7 @@ exports.login = async (req, res) => {
     });
   } else {
     return res.status(403).send({
-      message: `User is not registered`
+      message: `No account registered with given credentials`
     });
   }
 };

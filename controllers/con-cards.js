@@ -1,5 +1,5 @@
 const models = require("../models/index");
-
+const { isExpirationDateValid } = require('creditcard.js')
 exports.getCardDetails = async (req, res) => {
   const getCard = await models.Card.findOne({
     where: {
@@ -25,6 +25,11 @@ exports.addCardDetails = async (req, res) => {
       message: `Invalid Expiration Date`
     });
   }
+  if (!validateSecurityCode(req.body.code)) {
+    return res.status(400).send({
+      message: `Invalid Security Code`
+    })
+  }
   const isCardExisting = await models.Card.findOne({
     where: {
       Number: req.body.cardNumber
@@ -32,14 +37,14 @@ exports.addCardDetails = async (req, res) => {
   });
   if (!isCardExisting) {
     const newCard = await models.Card.create({
-      Type: req.body.type,
-      Number: req.body.cardNumber,
-      SecurityCode: req.body.code,
-      ExpirationDate: req.body.expirationDate,
+      Type: req.body.type.trim(),
+      Number: req.body.cardNumber.trim(),
+      SecurityCode: req.body.code.trim(),
+      ExpirationDate: req.body.expirationDate.trim(),
       MonthlyLimit: validateMonthlyLimit(req.body.monthlyLimit)
         ? req.body.monthlyLimit
         : 0,
-      ChildrenCardId: req.body.childrenCardId
+      ChildrenCardId: req.body.childrenCardId.trim()
     });
 
     if (!newCard) {
@@ -63,18 +68,18 @@ exports.updateCardDetails = async (req, res) => {
     },
     {
       where: {
-        CardId: req.body.cardId
+        CardId: req.params.cardId
       }
     }
   );
-  if (updateCard !== 1) {
+  if (updateCard[0]===0) {
     return res.status(400).send({
-      message: `Unable to update monthly limit`
+      message: `Unable to update monthly limit or it may have already been the same limit`
     });
   } else {
     const updatedDetails = await models.Card.findOne({
       where: {
-        CardId: req.body.cardId
+        CardId: req.params.cardId
       }
     });
     res.send(updatedDetails);
@@ -82,6 +87,16 @@ exports.updateCardDetails = async (req, res) => {
 };
 
 exports.removeCard = async (req, res) => {
+  const isExisting = await models.Card.findOne({
+    where: {
+      CardId: req.params.cardId
+    }
+  })
+  if (!isExisting) {
+    res.status(400).send({
+      message: `Card Does not exist`
+    })
+  }
   const deleteCard = await models.Card.destroy({
     where: {
       CardId: req.params.cardId
@@ -102,14 +117,8 @@ const validateCardNumber = (cardNumber) => {
   return re.test(cardNumber);
 };
 const validateExpiration = (expiration) => {
-  const mmYY = expiration.split("/");
-  if (mmYY[0].length !== 2) {
-    return false;
-  }
-  if (mmYY[1].length !== 2) {
-    return false;
-  }
-  return true;
+  const mmYY = expiration.split("/"); 
+  return isExpirationDateValid(mmYY[0], mmYY[1])
 };
 const validateMonthlyLimit = (limit) => {
   if (limit > 0) {
@@ -117,3 +126,7 @@ const validateMonthlyLimit = (limit) => {
   }
   return false;
 };
+
+const validateSecurityCode = code => {
+  return code.trim().length === 3
+}
