@@ -19,7 +19,8 @@ exports.login = async (req, res) => {
   if (user) {
     jwt.sign({ data }, process.env.SECRET_KEY, (err, token) => {
       res.send({
-        token
+        token,
+        userId: user.dataValues.UserId
       });
     });
   } else {

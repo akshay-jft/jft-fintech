@@ -1,9 +1,25 @@
 const models = require("../models/index");
-const { isExpirationDateValid } = require('creditcard.js')
+const { isExpirationDateValid } = require("creditcard.js");
+
+exports.getCardsByChildren = async (req, res) => {
+  const cards = await models.Card.findAll({
+    where: {
+      ChildrenCardId: req.params.childid
+    },
+    attributes: {
+      exclude: ["SecurityCode"]
+    }
+  });
+  return res.send(cards);
+};
+
 exports.getCardDetails = async (req, res) => {
   const getCard = await models.Card.findOne({
     where: {
       CardId: req.params.cardId
+    },
+    attributes: {
+      exclude: ["SecurityCode"]
     }
   });
   if (!getCard) {
@@ -11,6 +27,7 @@ exports.getCardDetails = async (req, res) => {
       message: `Card not found`
     });
   }
+
   return res.send(getCard);
 };
 
@@ -28,7 +45,7 @@ exports.addCardDetails = async (req, res) => {
   if (!validateSecurityCode(req.body.code)) {
     return res.status(400).send({
       message: `Invalid Security Code`
-    })
+    });
   }
   const isCardExisting = await models.Card.findOne({
     where: {
@@ -37,14 +54,17 @@ exports.addCardDetails = async (req, res) => {
   });
   if (!isCardExisting) {
     const newCard = await models.Card.create({
-      Type: req.body.type.trim(),
-      Number: req.body.cardNumber.trim(),
-      SecurityCode: req.body.code.trim(),
-      ExpirationDate: req.body.expirationDate.trim(),
+      Type: req.body.type,
+      Number: req.body.cardNumber,
+      SecurityCode: req.body.code,
+      ExpirationDate: req.body.expirationDate,
       MonthlyLimit: validateMonthlyLimit(req.body.monthlyLimit)
         ? req.body.monthlyLimit
         : 0,
-      ChildrenCardId: req.body.childrenCardId.trim()
+      ChildrenCardId: req.body.childrenCardId,
+      Balance: validateMonthlyLimit(req.body.monthlyLimit)
+      ? req.body.monthlyLimit
+      : 0,
     });
 
     if (!newCard) {
@@ -61,7 +81,31 @@ exports.addCardDetails = async (req, res) => {
   }
 };
 
-exports.updateCardDetails = async (req, res) => { 
+exports.updateCardDetails = async (req, res) => {
+  if (Number(req.body.monthlyLimit) <= 0) {
+    return res.status(400).send({
+      message: `Invalid Monthly Limit`
+    })
+  }
+  const findCard = await models.Card.findOne({
+    where: {
+      CardId: req.params.cardId,
+      ChildrenCardId: req.body.childrenId
+    }
+  });
+
+  if (!findCard) {
+    return res.status(400).send({
+      message: `Card not found`
+    });
+  } 
+
+  if (findCard.dataValues.Balance > Number(req.body.monthlyLimit)) {
+    return res.status(400).send({
+      message: `You Monthly Limit cannot be less than your available balance`
+    })
+  }
+
   const updateCard = await models.Card.update(
     {
       MonthlyLimit: req.body.monthlyLimit
@@ -72,30 +116,27 @@ exports.updateCardDetails = async (req, res) => {
       }
     }
   );
-  if (updateCard[0]===0) {
+  if (updateCard[0] === 0) {
     return res.status(400).send({
-      message: `Unable to update monthly limit or it may have already been the same limit`
+      message: `Unable to update monthly limit`
     });
-  } else {
-    const updatedDetails = await models.Card.findOne({
-      where: {
-        CardId: req.params.cardId
-      }
-    });
-    res.send(updatedDetails);
   }
+  return res.status(200).send({
+    message: `Operation Successfuly`
+  });
 };
 
 exports.removeCard = async (req, res) => {
   const isExisting = await models.Card.findOne({
     where: {
-      CardId: req.params.cardId
+      CardId: req.params.cardId,
+      ChildrenCardId: req.body.childrenId
     }
-  })
+  });
   if (!isExisting) {
     res.status(400).send({
       message: `Card Does not exist`
-    })
+    });
   }
   const deleteCard = await models.Card.destroy({
     where: {
@@ -117,8 +158,8 @@ const validateCardNumber = (cardNumber) => {
   return re.test(cardNumber);
 };
 const validateExpiration = (expiration) => {
-  const mmYY = expiration.split("/"); 
-  return isExpirationDateValid(mmYY[0], mmYY[1])
+  const mmYY = expiration.split("/");
+  return isExpirationDateValid(mmYY[0], mmYY[1]);
 };
 const validateMonthlyLimit = (limit) => {
   if (limit > 0) {
@@ -127,6 +168,6 @@ const validateMonthlyLimit = (limit) => {
   return false;
 };
 
-const validateSecurityCode = code => {
-  return code.trim().length === 3
-}
+const validateSecurityCode = (code) => {
+  return code.trim().length === 3;
+};

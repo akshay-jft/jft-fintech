@@ -2,10 +2,11 @@ const express = require("express");
 const db = require("./models");
 const jwt = require("jsonwebtoken");
 const app = express();
+const cors = require("cors");
 
 // App configurations
+app.use(cors());
 app.use(express.json());
-
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
@@ -29,7 +30,7 @@ const verifyToken = (req, res, next) => {
 
 //App Routes
 app.use("/auth", require("./routes/r-auth"));
-app.use("/user", verifyToken, require("./routes/r-users"));
+app.use("/user", require("./routes/r-users"));
 app.use("/children", verifyToken, require("./routes/r-children"));
 app.use("/card", verifyToken, require("./routes/r-cards"));
 app.use("/transactions", verifyToken, require("./routes/r-transactions"));

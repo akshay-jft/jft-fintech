@@ -39,6 +39,11 @@ module.exports = function (sequelize, DataTypes) {
         type: Sequelize.UUID,
         allowNull: false,
         field: "ChildrenCardId"
+      },
+      Balance: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        field: "Balance"
       }
     },
     {

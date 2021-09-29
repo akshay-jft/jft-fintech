@@ -1,5 +1,15 @@
 const models = require("../models/index");
 
+exports.getAllChildrens = async (req, res) => { 
+  const children = await models.Children.findAll({
+    where: {
+      ParentId: req.params.id
+    }
+  });
+
+  return res.send(children);
+};
+
 exports.getChildrenDetails = async (req, res) => {
   const child = await models.Children.findOne({
     where: {
@@ -21,49 +31,48 @@ exports.addChild = async (req, res) => {
   if (req.body.name.trim().length === 0) {
     return res.status(400).send({
       message: `Invalid Name, cannot be empty`
-    })
+    });
   }
   if (req.body.age <= 0) {
     return res.status(400).send({
       message: `Invalid Age`
-    })
+    });
   }
 
-  const existingChild = await models.Children.findOne({
-    where: {
-      Name: req.body.name,
-      ParentId: req.body.parentid
-    }
-  }); 
-  if (!existingChild) {
-    const child = await models.Children.create({
-      Name: req.body.name,
-      Age: req.body.age,
-      ParentId : req.body.parentid
-    });
-    if (!child) {
-      return res.status(400).send({
-        message: `Invalid Details, Please try again with valid details`
-      });
-    }
-    return res.send(child);
-  } else {
-    res.status(400).send({
-      message: `Child with given details already exist`
+  const child = await models.Children.create({
+    Name: req.body.name,
+    Age: req.body.age,
+    ParentId: req.body.parentid
+  });
+  if (!child) {
+    return res.status(400).send({
+      message: `Invalid Details, Please try again with valid details`
     });
   }
+  return res.send(child);
 };
 
 exports.updateChildrenDetails = async (req, res) => {
+  if (!req.body.Age || Number(req.body.Age) < 1 ) {
+    return res.status(400).send({
+      message: `Invalid Age`
+    })
+  }
+  if (req.body.Name.length === 0) {
+    return res.status(400).send({
+      message: `Invalid Name`
+    })
+  }
   const existingChild = await models.Children.findOne({
     where: {
       ChildrenId: req.params.id
     }
   });
+  
   if (existingChild) {
     let updatedValues = {
-      Name: validateName(req.body.name, existingChild.dataValues.Name),
-      Age: validateAge(req.body.age, existingChild.dataValues.Age)
+      Name: req.body.Name,
+      Age: req.body.Age
     };
     const updatedChild = await models.Children.update(
       {
@@ -72,7 +81,8 @@ exports.updateChildrenDetails = async (req, res) => {
       },
       {
         where: {
-          ChildrenId: req.params.id
+          ChildrenId: req.params.id,
+          ParentId: req.body.ParentId
         }
       }
     );
@@ -81,9 +91,9 @@ exports.updateChildrenDetails = async (req, res) => {
         where: {
           ChildrenId: req.params.id
         }
-      })
-      return res.send(child)
-    } 
+      });
+      return res.send(child);
+    }
   } else {
     res.status(400).send({
       message: `The Children does not exist`
@@ -94,7 +104,8 @@ exports.updateChildrenDetails = async (req, res) => {
 exports.deleteChild = async (req, res) => {
   const isExist = await models.Children.findOne({
     where: {
-      ChildrenId: req.params.id
+      ChildrenId: req.params.id,
+      ParentId: req.body.parentId
     }
   });
   if (isExist) {
