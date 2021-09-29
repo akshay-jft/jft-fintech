@@ -31,12 +31,12 @@ module.exports = function (sequelize, DataTypes) {
       timestamps: false
     }
   );
-  
+
   Children.associate = (models) => {
     Children.hasMany(models.Card, {
       foreignKey: "ChildrenCardId"
-    }); 
+    });
   };
-  
+
   return Children;
 };

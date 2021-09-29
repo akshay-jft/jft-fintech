@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require("sequelize"); 
+const { Sequelize, DataTypes } = require("sequelize");
 module.exports = function (sequelize, DataTypes) {
   const User = sequelize.define(
     "User",
@@ -35,7 +35,7 @@ module.exports = function (sequelize, DataTypes) {
   User.associate = (models) => {
     User.hasMany(models.Children, {
       foreignKey: "ParentId"
-    }); 
+    });
   };
   return User;
 };

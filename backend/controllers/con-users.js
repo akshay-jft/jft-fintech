@@ -64,7 +64,6 @@ exports.getAllChildrens = async (req, res) => {
       }
     }
   });
-  console.log(childrens);
   return res.send(childrens);
 };
 

@@ -1,6 +1,6 @@
 const models = require("../models/index");
 const jwt = require("jsonwebtoken");
-const bcrypt = require('bcrypt')
+const bcrypt = require("bcrypt");
 exports.login = async (req, res) => {
   let data = {
     email: req.body.email,
@@ -17,12 +17,15 @@ exports.login = async (req, res) => {
     }
   });
   if (user) {
-    const password = await bcrypt.compare(data.password, user.dataValues.Password)
+    const password = await bcrypt.compare(
+      data.password,
+      user.dataValues.Password
+    );
     if (!password) {
       return res.status(403).send({
         message: `Invalid Password`
-      })
-    } 
+      });
+    }
     jwt.sign({ data }, process.env.SECRET_KEY, (err, token) => {
       res.send({
         token,
@@ -34,7 +37,7 @@ exports.login = async (req, res) => {
       message: `No account registered with given credentials`
     });
   }
-}; 
+};
 
 const validateEmail = (email) => {
   const re =

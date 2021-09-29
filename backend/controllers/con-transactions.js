@@ -21,21 +21,18 @@ exports.checkout = async (req, res) => {
     const cardBalance = await models.Transaction.findAll({
       where: where
     });
-    console.log(cardBalance);
     let total = 0;
-    cardBalance.forEach((item) => { 
+    cardBalance.forEach((item) => {
       total = total + item.dataValues.Amount;
     });
-
-    console.log(total);
-    console.log(
-      total + Number(req.body.amount) <= cardExists.dataValues.MonthlyLimit
-    );
     if (total + Number(req.body.amount) < cardExists.dataValues.MonthlyLimit) {
       const txn = await models.Transaction.create({
         CardNumber: cardExists.dataValues.Number,
         Amount: req.body.amount,
-        TransactionDate: new Date(req.body.transactionDate)
+        TransactionDate: moment(new Date(req.body.transactionDate)).add(
+          1,
+          "days"
+        )
       });
 
       if (!txn) {

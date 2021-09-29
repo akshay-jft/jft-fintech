@@ -63,8 +63,8 @@ exports.addCardDetails = async (req, res) => {
         : 0,
       ChildrenCardId: req.body.childrenCardId,
       Balance: validateMonthlyLimit(req.body.monthlyLimit)
-      ? req.body.monthlyLimit
-      : 0,
+        ? req.body.monthlyLimit
+        : 0
     });
 
     if (!newCard) {
@@ -85,7 +85,7 @@ exports.updateCardDetails = async (req, res) => {
   if (Number(req.body.monthlyLimit) <= 0) {
     return res.status(400).send({
       message: `Invalid Monthly Limit`
-    })
+    });
   }
   const findCard = await models.Card.findOne({
     where: {
@@ -98,12 +98,12 @@ exports.updateCardDetails = async (req, res) => {
     return res.status(400).send({
       message: `Card not found`
     });
-  } 
+  }
 
   if (findCard.dataValues.Balance > Number(req.body.monthlyLimit)) {
     return res.status(400).send({
       message: `You Monthly Limit cannot be less than your available balance`
-    })
+    });
   }
 
   const updateCard = await models.Card.update(

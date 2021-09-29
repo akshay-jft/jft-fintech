@@ -1,6 +1,6 @@
 const models = require("../models/index");
 
-exports.getAllChildrens = async (req, res) => { 
+exports.getAllChildrens = async (req, res) => {
   const children = await models.Children.findAll({
     where: {
       ParentId: req.params.id
@@ -53,22 +53,22 @@ exports.addChild = async (req, res) => {
 };
 
 exports.updateChildrenDetails = async (req, res) => {
-  if (!req.body.Age || Number(req.body.Age) < 1 ) {
+  if (!req.body.Age || Number(req.body.Age) < 1) {
     return res.status(400).send({
       message: `Invalid Age`
-    })
+    });
   }
   if (req.body.Name.length === 0) {
     return res.status(400).send({
       message: `Invalid Name`
-    })
+    });
   }
   const existingChild = await models.Children.findOne({
     where: {
       ChildrenId: req.params.id
     }
   });
-  
+
   if (existingChild) {
     let updatedValues = {
       Name: req.body.Name,
