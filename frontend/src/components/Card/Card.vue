@@ -20,8 +20,7 @@
     </div>
     <div v-else class="d-flex justify-space-between">
       <div>
-        <h1 class="title">Monthly Limit: $ {{ card.MonthlyLimit }}</h1>
-        <h1 class="title">Balance Left : $ {{ card.Balance }}</h1>
+        <h1 class="title">Monthly Limit: $ {{ card.MonthlyLimit }}</h1> 
       </div> 
       <v-icon @click="isEditing = true">mdi-pencil</v-icon>
     </div>
@@ -94,6 +93,7 @@ export default {
         });
     },
     paymentFailure(error){
+      this.showPayCharge = false
       this.$emit('paymentFailure', error)
     },
     paymentSuccess(){

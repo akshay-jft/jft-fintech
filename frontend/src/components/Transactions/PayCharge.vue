@@ -8,6 +8,10 @@
       label="Enter charges to pay"
       v-model="formData.amount"
     ></v-text-field>
+    <v-text-field
+      type="date"
+      v-model="formData.transactionDate"
+    ></v-text-field>  
     <p v-if="errorMessage" class="error white--text">{{ errorMessage }}</p>
     <div class="text-end">
       <v-btn class="error" dark @click="handlePayment">Pay</v-btn>
@@ -27,7 +31,8 @@ export default {
       formData: {
         cardId: this.cardId,
         amount: ``,
-        childrenId: this.childrenId
+        childrenId: this.childrenId,
+        transactionDate: ``
       },
       errorMessage: ``
     }
