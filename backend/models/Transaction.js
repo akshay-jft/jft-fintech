@@ -19,6 +19,11 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.INTEGER,
         allowNull: false,
         field: "Amount"
+      },
+      TransactionDate: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        field: `TransactionDate`
       }
     },
     {

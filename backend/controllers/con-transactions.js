@@ -1,5 +1,6 @@
 const models = require("../models/index");
-
+const { Op } = require("sequelize");
+const moment = require("moment");
 exports.checkout = async (req, res) => {
   const cardExists = await models.Card.findOne({
     where: {
@@ -7,46 +8,47 @@ exports.checkout = async (req, res) => {
       ChildrenCardId: req.body.childrenId
     }
   });
+  const month = new Date(req.body.transactionDate).getMonth();
+  const year = new Date(req.body.transactionDate).getFullYear();
+  const startDate = new Date(year, month, 2);
+  const endDate = new Date(year, month + 1, 2);
+  const where = {
+    TransactionDate: {
+      [Op.between]: [startDate, endDate]
+    }
+  };
   if (cardExists) {
-    if (
-      Number(cardExists.dataValues.Balance) - Number(req.body.amount) >
-      0
-    ) {
+    const cardBalance = await models.Transaction.findAll({
+      where: where
+    });
+    console.log(cardBalance);
+    let total = 0;
+    cardBalance.forEach((item) => { 
+      total = total + item.dataValues.Amount;
+    });
+
+    console.log(total);
+    console.log(
+      total + Number(req.body.amount) <= cardExists.dataValues.MonthlyLimit
+    );
+    if (total + Number(req.body.amount) < cardExists.dataValues.MonthlyLimit) {
       const txn = await models.Transaction.create({
         CardNumber: cardExists.dataValues.Number,
-        Amount: req.body.amount
+        Amount: req.body.amount,
+        TransactionDate: new Date(req.body.transactionDate)
       });
-      
-      if (txn) { 
-        const finalAmount =
-          Number(cardExists.dataValues.Balance) -
-          Number(req.body.amount);
-        const txnSuccess = await models.Card.update(
-          {
-            Balance: finalAmount
-          },
-          {
-            where: {
-              Number: cardExists.dataValues.Number
-            }
-          }
-        );
 
-        if (txnSuccess) {
-          const updatedBalance = await models.Card.findOne({
-            where: {
-              CardId: req.body.cardId,
-            },
-            attributes: {
-              exclude: ['SecurityCode']
-            }
-          });
-          return res.send(updatedBalance);
-        }
+      if (!txn) {
+        return res.status(400).send({
+          message: `Transaction Failed`
+        });
       }
+      return res.status(200).send({
+        message: `Transaction Successful`
+      });
     } else {
-      res.status(400).send({
-        message: "Amount to be charged Exceed Available Balance"
+      return res.status(400).send({
+        message: `Monthly Limit Reached`
       });
     }
   } else {
@@ -56,12 +58,12 @@ exports.checkout = async (req, res) => {
   }
 };
 
-exports.getTransactions = async (req, res) => { 
+exports.getTransactions = async (req, res) => {
   const cardExist = await models.Card.findOne({
     where: {
       CardId: req.params.cardId
     }
-  }) 
+  });
   if (!cardExist) {
     return res.status(400).send({
       message: `Card Not registered`
@@ -72,10 +74,10 @@ exports.getTransactions = async (req, res) => {
       CardNumber: cardExist.dataValues.Number
     },
     attributes: {
-      exclude: ['CardNumber', 'updatedAt']
+      exclude: ["CardNumber", "updatedAt"]
     }
-  }); 
-  return res.send(txn)
+  });
+  return res.send(txn);
 };
 
 const validateCardNumber = (cardNumber) => {
